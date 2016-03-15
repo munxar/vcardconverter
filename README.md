@@ -1,2 +1,2 @@
-# vcardconverter
+# vcard converter
 convert vcard to a html table that can be imported into excel, number etc...
