@@ -16,6 +16,8 @@
         <th>NACHNAME</th>
         <th>TEL</th>
         <th>EMAIL</th>
+        <th>BIRTHDAY</th>
+        <th>NOTE</th>
     </tr>
     </thead>
     <tbody id="tbody">
@@ -67,18 +69,30 @@
             if(/^TEL;/.test(line)) {
                 card.tel = line.split(":")[1];
             }
+            if(/^BDAY:/.test(line)) {
+                card.birthday = line.split(":")[1];
+            }
+            if(/^NOTE:/.test(line)) {
+                card.note = line.split(":")[1];
+            }
         });
         return cards;
+    }
+
+    function print(value) {
+        return value ? value : "";
     }
 
     function render(cards) {
         tbody.innerHTML = cards.map(function(card) {
             return    "<tr>"
-                    +   "<td>" + card.fn + "</td>"
-                    +   "<td>" + card.lastname + "</td>"
-                    +   "<td>" + card.firstname + "</td>"
-                    +   "<td>" + card.tel + "</td>"
-                    +   "<td>" + card.email + "</td>"
+                    +   "<td>" + print(card.fn) + "</td>"
+                    +   "<td>" + print(card.lastname) + "</td>"
+                    +   "<td>" + print(card.firstname) + "</td>"
+                    +   "<td>" + print(card.tel) + "</td>"
+                    +   "<td>" + print(card.email) + "</td>"
+                    +   "<td>" + print(card.birthday) + "</td>"
+                    +   "<td>" + print(card.note) + "</td>"
                     + "</tr>";
         }).join("");
     }
