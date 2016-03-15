@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Konverter</title>
+</head>
+<body>
+<input id="file" type="file">
+<div id="out"></div>
+
+<table id="table">
+    <thead>
+        <tr>
+            <th>FN</th>
+            <th>VORNAME</th>
+            <th>NACHNAME</th>
+            <th>TEL</th>
+            <th>EMAIL</th>
+        </tr>
+    </thead>
+    <tbody id="tbody">
+    </tbody>
+</table>
+
+<script>
+    var file = document.getElementById("file");
+    var out = document.getElementById("out");
+    var tbody = document.getElementById("tbody");
+
+    file.addEventListener("change", function(e) {
+        var file = e.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var content = e.target.result;
+            var lines = content.split("\n");
+            var cards = extrakt(lines);
+            render(cards);
+        };
+        reader.readAsText(file);
+    }, false);
+
+    function extrakt(lines) {
+        var inside = false;
+        var cards = [];
+        var card = {};
+
+        lines.forEach(function(line) {
+            if(/BEGIN:VCARD/.test(line)) {
+                inside = true;
+                card = {};
+            }
+            if(/END:VCARD/.test(line) && inside) {
+                inside = false;
+                cards.push(card);
+            }
+            if(/^N:/.test(line)) {
+                var tokens = line.split(":")[1].split(";");
+                card.lastname = tokens[0];
+                card.firstname = tokens[1];
+            }
+            if(/^FN:/.test(line)) {
+                card.fn = line.split(":")[1];
+            }
+            if(/^EMAIL;/.test(line)) {
+                card.email = line.split(":")[1];
+            }
+            if(/^TEL;/.test(line)) {
+                card.tel = line.split(":")[1];
+            }
+        });
+        return cards;
+    }
+
+    function render(cards) {
+        tbody.innerHTML = cards.map(function(card) {
+            return    "<tr>"
+                    +   "<td>" + card.fn + "</td>"
+                    +   "<td>" + card.lastname + "</td>"
+                    +   "<td>" + card.firstname + "</td>"
+                    +   "<td>" + card.tel + "</td>"
+                    +   "<td>" + card.email + "</td>"
+                    + "</tr>";
+        }).join("");
+    }
+
+</script>
+</body>
+</html>
