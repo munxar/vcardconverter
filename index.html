@@ -9,30 +9,20 @@
 <div id="out"></div>
 
 <table id="table">
-    <thead>
-    <tr>
-        <th>FN</th>
-        <th>VORNAME</th>
-        <th>NACHNAME</th>
-        <th>TEL</th>
-        <th>EMAIL</th>
-        <th>BIRTHDAY</th>
-        <th>NOTE</th>
-    </tr>
-    </thead>
-    <tbody id="tbody">
-    </tbody>
+    <thead id="thead"></thead>
+    <tbody id="tbody"></tbody>
 </table>
 
 <script>
     var file = document.getElementById("file");
     var out = document.getElementById("out");
     var tbody = document.getElementById("tbody");
+    var thead = document.getElementById("thead");
 
-    file.addEventListener("change", function(e) {
+    file.addEventListener("change", function (e) {
         var file = e.target.files[0];
         var reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             var content = e.target.result;
             var lines = content.split("\n");
             var cards = extrakt(lines);
@@ -41,40 +31,72 @@
         reader.readAsText(file);
     }, false);
 
+    function attr(regex, name, parse) {
+        return {regex: regex, name: name, parse: parse};
+    }
+
+    function split(line) {
+        return line.split(":")[1];
+    }
+    function removeEmpty(value) {
+        return value;
+    }
+
+    var attrs = [
+        attr(/^FN:/, "fullname", function(line, card) {
+            card.fullname = split(line);
+        }),
+        attr(/^N:/, "lastname", function(line, card) {
+            card.lastname = split(line).split(";")[0];
+        }),
+        attr(/^N:/, "firstname", function(line, card) {
+            card.firstname = split(line).split(";")[1];
+        }),
+        attr(/^TITLE:/, "title", function(line, card) {
+            card.title = split(line);
+        }),
+        attr(/^EMAIL/, "email", function(line, card) {
+            card.email = card.email || [];
+            card.email.push(split(line));
+        }),
+        attr(/^TEL/, "tel", function(line, card) {
+            card.tel = card.tel || [];
+            card.tel.push(split(line));
+        }),
+        attr(/^ADR/, "address", function(line, card) {
+            card.address = card.address || [];
+            card.address.push(split(line).split(";").filter(removeEmpty).join(","));
+        }),
+        attr(/^BDAY/, "birthday", function(line, card) {
+            card.birthday = split(line);
+        }),
+        attr(/^CATEGORIES:/, "categories", function(line, card) {
+            card.categories = split(line);
+        }),
+        attr(/^NOTE:/, "note", function(line, card) {
+            card.note = split(line);
+        }),
+        attr(/^ORG:/, "org", function(line, card) {
+            card.org = split(line);
+        })
+    ];
+
     function extrakt(lines) {
-        var inside = false;
         var cards = [];
         var card = {};
 
-        lines.forEach(function(line) {
+        lines.forEach(function (line) {
             if(/BEGIN:VCARD/.test(line)) {
-                inside = true;
                 card = {};
             }
-            if(/END:VCARD/.test(line) && inside) {
-                inside = false;
+            if(/END:VCARD/.test(line)) {
                 cards.push(card);
             }
-            if(/^N:/.test(line)) {
-                var tokens = line.split(":")[1].split(";");
-                card.lastname = tokens[0];
-                card.firstname = tokens[1];
-            }
-            if(/^FN:/.test(line)) {
-                card.fn = line.split(":")[1];
-            }
-            if(/^EMAIL;/.test(line)) {
-                card.email = line.split(":")[1];
-            }
-            if(/^TEL;/.test(line)) {
-                card.tel = line.split(":")[1];
-            }
-            if(/^BDAY:/.test(line)) {
-                card.birthday = line.split(":")[1];
-            }
-            if(/^NOTE:/.test(line)) {
-                card.note = line.split(":")[1];
-            }
+            attrs.forEach(function (attr) {
+                if(attr.regex.test(line)) {
+                    attr.parse(line, card);
+                }
+            });
         });
         return cards;
     }
@@ -84,15 +106,15 @@
     }
 
     function render(cards) {
-        tbody.innerHTML = cards.map(function(card) {
-            return    "<tr>"
-                    +   "<td>" + print(card.fn) + "</td>"
-                    +   "<td>" + print(card.lastname) + "</td>"
-                    +   "<td>" + print(card.firstname) + "</td>"
-                    +   "<td>" + print(card.tel) + "</td>"
-                    +   "<td>" + print(card.email) + "</td>"
-                    +   "<td>" + print(card.birthday) + "</td>"
-                    +   "<td>" + print(card.note) + "</td>"
+        thead.innerHTML = "<tr>" + attrs.map(function(attr) {
+                    return "<th>" + attr.name + "</th>"
+                }).join("") + "</tr>";
+
+        tbody.innerHTML = cards.map(function (card) {
+            return "<tr>"
+                    + attrs.map(function(attr) {
+                        return "<td>" +print(card[attr.name]) + "</td>";
+                    }).join("")
                     + "</tr>";
         }).join("");
     }
