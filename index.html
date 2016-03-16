@@ -71,7 +71,7 @@
             card.tel = card.tel || [];
             card.tel.push(split(line));
         }),
-        attr(/^ADR/, "address", function (line, card) {
+        attr(/ADR/, "address", function (line, card) {
             card.address = card.address || [];
             card.address.push(split(line).split(";").filter(removeEmpty).join(";"));
         }),
