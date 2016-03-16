@@ -6,6 +6,7 @@
 </head>
 <body>
 <input id="file" type="file">
+<div id="dl"></div>
 <div id="out"></div>
 
 <table id="table">
@@ -18,6 +19,11 @@
     var out = document.getElementById("out");
     var tbody = document.getElementById("tbody");
     var thead = document.getElementById("thead");
+    var dl = document.getElementById("dl");
+    var a = document.createElement("a");
+    a.innerText = "download";
+    a.target = "_blank";
+    a.download = "export.csv";
 
     file.addEventListener("change", function (e) {
         var file = e.target.files[0];
@@ -27,6 +33,8 @@
             var lines = content.split("\n");
             var cards = extrakt(lines);
             render(cards);
+            //a.href = "data:text/csv;charset=utf-8," + encodeURI(csv(cards));
+            //dl.appendChild(a);
         };
         reader.readAsText(file);
     }, false);
@@ -43,40 +51,40 @@
     }
 
     var attrs = [
-        attr(/^FN:/, "fullname", function(line, card) {
+        attr(/^FN:/, "fullname", function (line, card) {
             card.fullname = split(line);
         }),
-        attr(/^N:/, "lastname", function(line, card) {
+        attr(/^N:/, "lastname", function (line, card) {
             card.lastname = split(line).split(";")[0];
         }),
-        attr(/^N:/, "firstname", function(line, card) {
+        attr(/^N:/, "firstname", function (line, card) {
             card.firstname = split(line).split(";")[1];
         }),
-        attr(/^TITLE:/, "title", function(line, card) {
+        attr(/^TITLE:/, "title", function (line, card) {
             card.title = split(line);
         }),
-        attr(/^EMAIL/, "email", function(line, card) {
+        attr(/^EMAIL/, "email", function (line, card) {
             card.email = card.email || [];
             card.email.push(split(line));
         }),
-        attr(/^TEL/, "tel", function(line, card) {
+        attr(/^TEL/, "tel", function (line, card) {
             card.tel = card.tel || [];
             card.tel.push(split(line));
         }),
-        attr(/^ADR/, "address", function(line, card) {
+        attr(/^ADR/, "address", function (line, card) {
             card.address = card.address || [];
-            card.address.push(split(line).split(";").filter(removeEmpty).join(","));
+            card.address.push(split(line).split(";").filter(removeEmpty).join(";"));
         }),
-        attr(/^BDAY/, "birthday", function(line, card) {
+        attr(/^BDAY/, "birthday", function (line, card) {
             card.birthday = split(line);
         }),
-        attr(/^CATEGORIES:/, "categories", function(line, card) {
+        attr(/^CATEGORIES:/, "categories", function (line, card) {
             card.categories = split(line);
         }),
-        attr(/^NOTE:/, "note", function(line, card) {
+        attr(/^NOTE:/, "note", function (line, card) {
             card.note = split(line);
         }),
-        attr(/^ORG:/, "org", function(line, card) {
+        attr(/^ORG:/, "org", function (line, card) {
             card.org = split(line);
         })
     ];
@@ -86,14 +94,14 @@
         var card = {};
 
         lines.forEach(function (line) {
-            if(/BEGIN:VCARD/.test(line)) {
+            if (/BEGIN:VCARD/.test(line)) {
                 card = {};
             }
-            if(/END:VCARD/.test(line)) {
+            if (/END:VCARD/.test(line)) {
                 cards.push(card);
             }
             attrs.forEach(function (attr) {
-                if(attr.regex.test(line)) {
+                if (attr.regex.test(line)) {
                     attr.parse(line, card);
                 }
             });
@@ -106,17 +114,35 @@
     }
 
     function render(cards) {
-        thead.innerHTML = "<tr>" + attrs.map(function(attr) {
+        thead.innerHTML = "<tr>" + attrs.map(function (attr) {
                     return "<th>" + attr.name + "</th>"
                 }).join("") + "</tr>";
 
         tbody.innerHTML = cards.map(function (card) {
             return "<tr>"
-                    + attrs.map(function(attr) {
-                        return "<td>" +print(card[attr.name]) + "</td>";
+                    + attrs.map(function (attr) {
+                        return "<td>" + print(card[attr.name]) + "</td>";
                     }).join("")
                     + "</tr>";
         }).join("");
+    }
+
+    function csv(cards) {
+        var del = ",";
+        var lines = [];
+        var header = attrs.map(function (attr) {
+            return attr.name;
+        }).join(del);
+        lines.push(header);
+
+        cards.forEach(function (card) {
+            var line = attrs.map(function (attr) {
+                        return print(card[attr.name]);
+                    }).join(del);
+
+            lines.push(line);
+        });
+        return lines.join("\n");
     }
 
 </script>
