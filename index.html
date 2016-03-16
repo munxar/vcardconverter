@@ -71,9 +71,10 @@
             card.tel = card.tel || [];
             card.tel.push(split(line));
         }),
-        attr(/ADR/, "address", function (line, card) {
+        attr(/^(ADR|item.*ADR)/, "address", function (line, card) {
             card.address = card.address || [];
-            card.address.push(split(line).split(";").filter(removeEmpty).join(", "));
+            var t = split(line) || [];
+            card.address.push(t.split(";").filter(removeEmpty).join(", "));
         }),
         attr(/^BDAY/, "birthday", function (line, card) {
             card.birthday = split(line);
