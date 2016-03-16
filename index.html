@@ -73,7 +73,7 @@
         }),
         attr(/ADR/, "address", function (line, card) {
             card.address = card.address || [];
-            card.address.push(split(line).split(";").filter(removeEmpty).join(";"));
+            card.address.push(split(line).split(";").filter(removeEmpty).join(", "));
         }),
         attr(/^BDAY/, "birthday", function (line, card) {
             card.birthday = split(line);
@@ -110,7 +110,12 @@
     }
 
     function print(value) {
-        return value ? value : "";
+        value = value || "";
+        if(value.join) {
+            return value.join(",");
+        } else {
+            return value
+        }
     }
 
     function render(cards) {
